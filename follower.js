@@ -1,25 +1,19 @@
 'use strict';
 
-class Follower extends EventEmitter{
-    constructor(state, timer, log){
-        super();
+const Base = require('./base');
 
-        this._state = state;
-        this._timer = timer;
-        this._log = log;
-    }
-
-    run(manager){
+class Follower extends Base {
+    run() {
         this._timer.start(() => {
             manager.switchToCandidate();
         }, 1000);
     }
 
-    appendEntries(term, leaderId, prevLogIndex, prevLogTerm, entries, leaderCommit){
+    appendEntries(term, leaderId, prevLogIndex, prevLogTerm, entries, leaderCommit) {
 
     }
 
-    requestVote(term, candidateId, lastLogIndex, lastLogTerm){
+    requestVote(term, candidateId, lastLogIndex, lastLogTerm) {
 
     }
 }
