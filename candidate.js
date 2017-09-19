@@ -3,34 +3,40 @@
 const Base = require('./base');
 
 class Candidate extends Base {
-    run(){
-        this._timer.start(()=>{
-            this._manager.switchToCandidate();
-        }, 1000);
+	setManager(manager){
+		super.setManager(manager);
 
-        // Vote for self
+		this._requestVoteResponse = this._requestVoteResponse.bind(this);
+	}
 
-        this._manager.emit('requestVote', {});
-        this._manager.on('requestVoteResponse', ({term, voteGranted}) => {
-            // If RPC request or response contains term T > currentTerm:
-            // set currentTerm = T, convert to follower (§5.1)
-            this._manager.switchToFollower();
+	run() {
+		super.run();
 
-            // If votes received from majority of servers: become leader
-            this._manager.switchToLeader();
-        });
-    }
-    appendEntries(term, leaderId, prevLogIndex, prevLogTerm, entries, leaderCommit) {
-        // If RPC request or response contains term T > currentTerm:
-        // set currentTerm = T, convert to follower (§5.1)
-        this._manager.switchToFollower();
-    }
+		this._manager.on('requestVoteResponse', this._requestVoteResponse);
 
-    requestVote(term, candidateId, lastLogIndex, lastLogTerm) {
-        // If RPC request or response contains term T > currentTerm:
-        // set currentTerm = T, convert to follower (§5.1)
-        this._manager.switchToFollower();
-    }
+		this._timer.start(() => {
+			this._manager.switchToCandidate();
+		}, 1000);
+	}
+
+	stop(){
+		super.stop();
+
+		this._manager.removeListener('requestVoteResponse', this._requestVoteResponse);
+	}
+
+	_requestVoteResponse({term, voteGranted}){
+		// If RPC request or response contains term T > currentTerm:
+		// set currentTerm = T, convert to follower (5.1)
+		this._manager.switchToFollower();
+
+		// If votes received from majority of servers: become leader
+		this._manager.switchToLeader();
+
+
+		this._checkCommit();
+		this._checkTerm(term);
+	}
 }
 
 module.exports = Candidate;
