@@ -18,6 +18,18 @@ class Manager extends EventEmitter {
 
     run() {
         this._current.run(this);
+
+        const process = (event) => {
+            if(event.params.term > this._state.currentTerm){
+                this._state.currentTerm = event.params.term;
+                this.switchToFollower();
+            }
+
+            this._current[event.method](event.params);
+        };
+
+        this.on('request', process);
+        this.on('response', process);
     }
 
     appendEntries({term, leaderId, prevLogIndex, prevLogTerm, entries, leaderCommit}) {
@@ -32,7 +44,7 @@ class Manager extends EventEmitter {
 
     }
 
-    switchToFollower(current) {
+    switchToFollower() {
         this._current.stop();
         this._current = this._follower;
         this._current.run(this);

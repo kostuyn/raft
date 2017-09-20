@@ -12,7 +12,9 @@ class Base {
         this._manager = manager;
 	    
 	    this._requestVote = this._requestVote.bind(this);
-	    
+
+
+
     }
 
 	run() {
