@@ -3,40 +3,69 @@
 const Base = require('./base');
 
 class Candidate extends Base {
-	setManager(manager){
-		super.setManager(manager);
+    run() {
+        // Increment currentTerm
+        // Vote for self
+        const voteParams = this._state.getVoteParams();
 
-		this._requestVoteResponse = this._requestVoteResponse.bind(this);
-	}
+        this._state.nodes.forEach((node) => {
+            this._requestVoteHandler(voteParams, node);
+        });
 
-	run() {
-		super.run();
+        this._timer.start(() => {
+            this._manager.switchToCandidate();
+        }, 1000);
+    }
 
-		this._manager.on('requestVoteResponse', this._requestVoteResponse);
+    stop() {
+        this._timer.stop();
+        this._state.nodes.forEach((node) => {
+            node.erase();
+        });
+    }
 
-		this._timer.start(() => {
-			this._manager.switchToCandidate();
-		}, 1000);
-	}
+    async appendEntries(args) {
+        // If AppendEntries RPC received from new leader: convert to
+        // follower
+        // If RPC request or response contains term T > currentTerm:
+        // set currentTerm = T, convert to follower (5.1)
+        if (args.term >= this._state.currentTerm) {
+            this._state.changeTerm(args.term);
+            this._manager.switchToFollower();
+            return await this._manager.appendEntries(args)
+        }
 
-	stop(){
-		super.stop();
+        return await super.appendEntries(args);
+    }
 
-		this._manager.removeListener('requestVoteResponse', this._requestVoteResponse);
-	}
+    async requestVote(args) {
+        // If RPC request or response contains term T > currentTerm:
+        // set currentTerm = T, convert to follower (5.1)
+        if (args.term > this._state.currentTerm) {
+            this._state.changeTerm(args.term);
+            this._manager.switchToFollower();
+            return await this._manager.requestVote(args);
+        }
 
-	_requestVoteResponse({term, voteGranted}){
-		// If RPC request or response contains term T > currentTerm:
-		// set currentTerm = T, convert to follower (5.1)
-		this._manager.switchToFollower();
+        return await super.requestVote(args);
+    }
 
-		// If votes received from majority of servers: become leader
-		this._manager.switchToLeader();
+    async _requestVoteHandler(voteParams, node) {
+        const vote = await node.requestVote(voteParams);
 
+        // If RPC request or response contains term T > currentTerm:
+        // set currentTerm = T, convert to follower (5.1)
+        if (vote.term > this._state.currentTerm) {
+            this._state.changeTerm(vote.term);
+            return this._manager.switchToFollower();
+        }
 
-		this._checkCommit();
-		this._checkTerm(term);
-	}
+        // If votes received from majority of servers: become leader
+        const isMajority = this._state.voteGranted(node.id, vote);
+        if (isMajority) {
+            this._manager.switchToLeader();
+        }
+    }
 }
 
 module.exports = Candidate;

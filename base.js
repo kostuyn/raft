@@ -1,63 +1,64 @@
 'use strict';
 
 class Base {
-    constructor(state, entriesLog, timer, log) {
+    constructor(state, timer, log) {
         this._state = state;
-        this._entriesLog = entriesLog;
         this._timer = timer;
         this._log = log;
     }
 
     setManager(manager) {
         this._manager = manager;
-	    
-	    this._requestVote = this._requestVote.bind(this);
-
-
-
-    }
-
-	run() {
-		this._manager.on('requestVote', this._requestVote);
-	}
-	
-    stop() {
-	    this._manager.removeListener('requestVote', this._requestVote);
-        this._timer.stop();
     }
 
     /**
      * By default returns leaderId
      * @returns {Promise}
      */
-    addCmd(){
+    addCmd() {
         return new Promise((resolve) => {
-            resolve(this._state.leaderId);
-        })
+            resolve({leaderId: this._state.leaderId});
+        });
     }
 
-	_checkTerm(term){
-		// If RPC request or response contains term T > currentTerm:
-		// set currentTerm = T, convert to follower (5.1)
+    async appendEntries({term, leaderId, prevLogIndex, prevLogTerm, entries, leaderCommit}) {
+        // 1. Reply false if term < currentTerm (5.1)
+        // 2. Reply false if log doesn't contain an entry at prevLogIndex
+        // whose term matches prevLogTerm (5.3)
+        if (term < this._state.currentTerm ||
+            !this._state.contains(prevLogIndex, prevLogTerm)) {
+            return {success: false, term: this._state.currentTerm};
+        }
 
-		this._manager.switchToFollower();
-	}
+        // 3. If an existing entry conflicts with a new one (same index
+        // but different terms), delete the existing entry and all that
+        // follow it (5.3)
+        this._state.checkConflicts(prevLogIndex, prevLogTerm);
 
-	_checkCommit(){
-		// If commitIndex > lastApplied: increment lastApplied, apply
-		// log[lastApplied] to state machine (5.3)
-	}
+        // 4. Append any new entries not already in the log
+        this._state.appendEntires(entries);
 
-    _requestVote(term, candidateId, lastLogIndex, lastLogTerm){
-        // If RPC request or response contains term T > currentTerm:
-        // set currentTerm = T, convert to follower (5.1)
+        // 5. If leaderCommit > commitIndex, set
+        // commitIndex = min(leaderCommit, index of last new entry)
+        this._state.updateCommitIndex(leaderCommit);
 
-	    // Reply false if term < currentTerm (5.1)
-	    // If votedFor is null or candidateId, and candidate’s log is at
-	    // least as up-to-date as receiver’s log, grant vote (5.2, 5.4)
+        // If commitIndex > lastApplied: increment lastApplied, apply
+        // log[lastApplied] to state machine (5.3)
+        this._state.applyCmd();
 
-	    this._manager.switchToFollower();
-    }	
+        return {success: true, term: this._state.currentTerm};
+    }
+
+    async requestVote({term, candidateId, lastLogIndex, lastLogTerm}) {
+        // Reply false if term < currentTerm (5.1)
+        if (term < this._state.currentTerm) {
+            return {voteGranted: false, term: this._state.currentTerm};
+        }
+
+        // If votedFor is null or candidateId, and candidate’s log is at
+        // least as up-to-date as receiver’s log, grant vote (5.2, 5.4)
+        return {};
+    }
 }
 
 module.exports = Base;
