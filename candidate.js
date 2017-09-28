@@ -8,7 +8,7 @@ class Candidate extends Base {
         // Vote for self
         const voteParams = this._state.getVoteParams();
 
-        this._state.nodes.forEach((node) => {
+        this._state.getNodes().forEach((node) => {
             this._requestVoteHandler(voteParams, node);
         });
 
@@ -19,7 +19,7 @@ class Candidate extends Base {
 
     stop() {
         this._timer.stop();
-        this._state.nodes.forEach((node) => {
+        this._state.getNodes().forEach((node) => {
             node.erase();
         });
     }
