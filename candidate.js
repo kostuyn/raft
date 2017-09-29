@@ -8,7 +8,7 @@ class Candidate extends Base {
         // Vote for self
         const newTerm = this._state.currentTerm + 1;
         this._state.changeTerm(newTerm);
-        this._state.vote(this._state.id);
+        this._state.voteForSelf();
 
         const voteParams = this._state.getVoteParams();
 

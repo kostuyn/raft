@@ -42,7 +42,6 @@ class Leader extends Base {
     addCmd(cmd) {
         // If command received from client: append entry to local log,
         //     respond after entry applied to state machine (5.3)
-        // TODO: waite majority response and resolve
         return new Promise((resolve) => {
 
         });
@@ -68,12 +67,13 @@ class Leader extends Base {
 
             //If there exists an N such that N > commitIndex, a majority
             //of matchIndex[i] >= N, and log[N].term == currentTerm:
-            //set commitIndex = N (5.3, 5.4)
-            this._state.changeCommitIndex(index);
+            //set commitIndex = N (5.3, 5.4)            
+	        this._state.setMajorityIndex();	        
 
             // If commitIndex > lastApplied: increment lastApplied, apply
             // log[lastApplied] to state machine (5.3)
-            this._state.applyCmd();
+	        // TODO: release 'addCmd'?? event??
+            const results = await this._state.applyCmd();
 
             if(this._state.hasEntries(node.id)){
                 await this._appendEntriesHandler(node);
