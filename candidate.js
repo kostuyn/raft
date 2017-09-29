@@ -1,5 +1,8 @@
 'use strict';
 
+
+const _ = require('lodash');
+
 const Base = require('./base');
 
 class Candidate extends Base {
@@ -12,7 +15,7 @@ class Candidate extends Base {
 
         const voteParams = this._state.getVoteParams();
 
-        this._state.getNodes().forEach((node) => {
+        _.forEach(this._state.getNodes(), (node) => {
             this._requestVoteHandler(voteParams, node);
         });
 
@@ -23,7 +26,7 @@ class Candidate extends Base {
 
     stop() {
         this._timer.stop();
-        this._state.getNodes().forEach((node) => {
+        _.forEach(this._state.getNodes(), (node) => {
             node.erase();
         });
     }

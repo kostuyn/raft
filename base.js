@@ -15,7 +15,7 @@ class Base {
      * By default returns leaderId
      * @returns {Promise}
      */
-    addCmd() {
+    addCmd(cmd) {
         return new Promise((resolve) => {
             resolve({leaderId: this._state.leaderId});
         });
