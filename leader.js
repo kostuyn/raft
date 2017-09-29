@@ -57,7 +57,7 @@ class Leader extends Base {
         const result = await node.appendEntries(entriesParams);
 
         if (result.term > this._state.currentTerm) {
-            this._state.currentTerm = result.term;
+            this._state.changeTerm(result.term);
             return this._manager.switchToFollower();
         }
 
@@ -69,11 +69,15 @@ class Leader extends Base {
             //If there exists an N such that N > commitIndex, a majority
             //of matchIndex[i] >= N, and log[N].term == currentTerm:
             //set commitIndex = N (5.3, 5.4)
-            // TODO:
+            this._state.changeCommitIndex(index);
 
             // If commitIndex > lastApplied: increment lastApplied, apply
             // log[lastApplied] to state machine (5.3)
             this._state.applyCmd();
+
+            if(this._state.hasEntries(node.id)){
+                await this._appendEntriesHandler(node);
+            }
 
             await this._timer.delay(100);
             await this._appendEntriesHandler(node);

@@ -6,6 +6,10 @@ class Candidate extends Base {
     run() {
         // Increment currentTerm
         // Vote for self
+        const newTerm = this._state.currentTerm + 1;
+        this._state.changeTerm(newTerm);
+        this._state.vote(this._state.id);
+
         const voteParams = this._state.getVoteParams();
 
         this._state.getNodes().forEach((node) => {
@@ -51,17 +55,17 @@ class Candidate extends Base {
     }
 
     async _requestVoteHandler(voteParams, node) {
-        const vote = await node.requestVote(voteParams);
+        const {term, voteGranted} = await node.requestVote(voteParams);
 
         // If RPC request or response contains term T > currentTerm:
         // set currentTerm = T, convert to follower (5.1)
-        if (vote.term > this._state.currentTerm) {
-            this._state.changeTerm(vote.term);
+        if (term > this._state.currentTerm) {
+            this._state.changeTerm(term);
             return this._manager.switchToFollower();
         }
 
         // If votes received from majority of servers: become leader
-        const isMajority = this._state.voteGranted(node.id, vote);
+        const isMajority = this._state.hasMajorityVotes(node.id, voteGranted);
         if (isMajority) {
             this._manager.switchToLeader();
         }

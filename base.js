@@ -57,6 +57,8 @@ class Base {
 
         // If votedFor is null or candidateId, and candidate’s log is at
         // least as up-to-date as receiver’s log, grant vote (5.2, 5.4)
+        const voteGranted = term < this._state.currentTerm &&
+            this._state.canVoteGrant(candidateId, lastLogIndex, lastLogTerm);
         return {};
     }
 }
