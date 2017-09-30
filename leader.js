@@ -32,7 +32,7 @@ class Leader extends Base {
         //     respond after entry applied to state machine (5.3)
         this._state.addCmd({cmd, term: this._state.currentTerm});
 
-        const key = this._getKey(cmd.nodeId, cmd.id);
+        const key = this._getKey(cmd);
         return new Promise((resolve, reject) => {
             this._cmdResolvers[key] = {resolve, reject};
         }).then((result) => {
@@ -92,8 +92,9 @@ class Leader extends Base {
             // If commitIndex > lastApplied: increment lastApplied, apply
             // log[lastApplied] to state machine (5.3)
             const results = await this._state.applyCmd();
+
             _.forEach(results, ({cmd, result}) => {
-                const key = this._getKey(cmd.nodeId, cmd.id);
+                const key = this._getKey(cmd);
                 const resolver = this._cmdResolvers[key];
                 resolver.resolve(result);
             });
@@ -112,8 +113,8 @@ class Leader extends Base {
         }
     }
 
-    _getKey(nodeId, cmdId) {
-        return [nodeId, cmdId].join(':');
+    _getKey({clientId, cmdId}) {
+        return [clientId, cmdId].join(':');
     }
 }
 

@@ -53,7 +53,6 @@ class Base {
 
         // If commitIndex > lastApplied: increment lastApplied, apply
         // log[lastApplied] to state machine (5.3)
-        // TODO: send response to client ??
         await this._state.applyCmd();
 
         return {success: true, term: this._state.currentTerm};

@@ -6,8 +6,9 @@ const _ = require('lodash');
 const ENTRIES_COUNT = 10;
 
 class State {
-	constructor(nodes) {
+	constructor(nodes, cmdHandler) {
 		this._nodes = nodes;
+		this._cmdHandler = cmdHandler;
 
 		const allNodesCount = nodes.length + 1;
 		this._majority = Math.ceil(allNodesCount / 2) - allNodesCount % 2 + 1;
@@ -162,7 +163,7 @@ class State {
 		while(this._lastApplied < this._commitIndex) {
 			const {cmd} = this._logEntries[this._lastApplied + 1];
 			// TODO: send cmd to external service. Ex.: await this._cmdService.execute(cmd)
-			const result = await cmd.execute();
+			const result = await this._cmdHandler.execute(cmd);
 
 			results.push({result, cmd});
 			this._lastApplied++;
