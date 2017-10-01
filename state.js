@@ -162,7 +162,6 @@ class State {
 		const results = [];
 		while(this._lastApplied < this._commitIndex) {
 			const {cmd} = this._logEntries[this._lastApplied + 1];
-			// TODO: send cmd to external service. Ex.: await this._cmdService.execute(cmd)
 			const result = await this._cmdHandler.execute(cmd);
 
 			results.push({result, cmd});
