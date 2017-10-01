@@ -1,29 +1,28 @@
 'use strict';
 
 class Node {
-    constructor(clientFactory, log) {
-        this._clientFactory = clientFactory;
+    constructor(client, log) {
+        this._client = client;
         this._log = log;
     }
 
     async connect() {
-        this._client = this._clientFactory.create();
         // TODO: reconnect logic
         //this._client.on('error', );
 
         await this._client.connect();
     }
 
-    async erase() {
-        await this._client.disconnect();
+    async close() {
+        await this._client.close();
     }
 
     async appendEntries(args) {
-        return await this._client.emit('appendEntries', args);
+        return await this._client.send('appendEntries', args);
     }
 
     async requestVote(args) {
-        return await this._client.emit('requestVote', args);
+        return await this._client.send('requestVote', args);
     }
 }
 

@@ -11,8 +11,15 @@ class ServerRunner {
     }
 
     async run() {
-        this._server.on('appendEntries', this._appendEntriesHandler);
-        this._server.on('requestVote', this._requestVoteHandler);
+        this._server.on('appendEntries', async (args) => {
+            const result = await this._manager.appendEntries(args);
+            await this._server.send('appendEntriesResponse', result);
+        });
+
+        this._server.on('requestVote', async (args) => {
+            const result = await this._manager.requestVote(args);
+            await this._server.send('requestVoteResponse', result);
+        });
 
         this._manager.run();
         await this._server.listen();

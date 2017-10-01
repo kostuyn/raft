@@ -12,14 +12,15 @@ class Leader extends Base {
     }
 
     run() {
-        _.forEach(this._state.getNodes(), (node) => {
-            this._appendEntriesHandler(node);
+        _.forEach(this._state.getNodes(), async (node) => {
+            await node.connect();
+            await this._appendEntriesHandler(node);
         });
     }
 
     stop() {
-        _.forEach(this._state.getNodes(), (node) => {
-            node.erase();
+        _.forEach(this._state.getNodes(), async (node) => {
+            await node.close();
         });
 
         _.forEach(this._cmdResolvers, (resolver) => {

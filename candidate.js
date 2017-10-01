@@ -15,8 +15,9 @@ class Candidate extends Base {
 
         const voteParams = this._state.getVoteParams();
 
-        _.forEach(this._state.getNodes(), (node) => {
-            this._requestVoteHandler(voteParams, node);
+        _.forEach(this._state.getNodes(), async (node) => {
+            await node.connect();
+            await this._requestVoteHandler(voteParams, node);
         });
 
         this._timer.start(() => {
@@ -26,11 +27,15 @@ class Candidate extends Base {
 
     stop() {
         this._timer.stop();
-        _.forEach(this._state.getNodes(), (node) => {
-            node.erase();
+        _.forEach(this._state.getNodes(), async (node) => {
+            await node.close();
         });
     }
 
+    /**
+     * @param args - params
+     * @returns {{success: boolean, term: number}}
+     */
     async appendEntries(args) {
         // If AppendEntries RPC received from new leader: convert to
         // follower

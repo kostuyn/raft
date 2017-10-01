@@ -1,11 +1,7 @@
 'use strict';
 
-const EventEmitter = require('events').EventEmitter;
-
-class Client extends EventEmitter {
+class Client {
     constructor(log) {
-        super();
-
         this._log = log;
     }
 
