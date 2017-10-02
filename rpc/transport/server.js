@@ -3,9 +3,10 @@
 const EventEmitter = require('events').EventEmitter;
 
 class Server extends EventEmitter {
-    constructor(log) {
+    constructor(config, log) {
         super();
-
+        
+        this._config = config;
         this._log = log;
     }
 

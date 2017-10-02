@@ -15,7 +15,7 @@ class Candidate extends Base {
 
         const voteParams = this._state.getVoteParams();
 
-        _.forEach(this._state.getNodes(), async (node) => {
+        _.forEach(this._nodes, async (node) => {
             await node.connect();
             await this._requestVoteHandler(voteParams, node);
         });
@@ -27,7 +27,7 @@ class Candidate extends Base {
 
     stop() {
         this._timer.stop();
-        _.forEach(this._state.getNodes(), async (node) => {
+        _.forEach(this._nodes, async (node) => {
             await node.close();
         });
     }

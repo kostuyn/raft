@@ -1,7 +1,8 @@
 'use strict';
 
 class Client {
-    constructor(log) {
+    constructor(config, log) {
+        this._config = config;
         this._log = log;
     }
 

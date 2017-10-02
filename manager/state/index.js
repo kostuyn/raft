@@ -6,11 +6,10 @@ const _ = require('lodash');
 const ENTRIES_COUNT = 10;
 
 class State {
-	constructor(nodes, cmdHandler) {
-		this._nodes = nodes;
-		this._cmdHandler = cmdHandler;
+	constructor(nodesCount) {
+		nodesCount = nodesCount || 0;
 
-		const allNodesCount = nodes.length + 1;
+		const allNodesCount = nodesCount + 1;
 		this._majority = Math.ceil(allNodesCount / 2) - allNodesCount % 2 + 1;
 
 		this._id = uuid();
@@ -49,10 +48,6 @@ class State {
 		this._votesCount = 0;
 		this._voteGranteds = {};
 		this._votedFor = null;
-	}
-
-	getNodes() {
-		return this._nodes;
 	}
 
 	voteForSelf() {
@@ -158,17 +153,14 @@ class State {
 		}
 	}
 
-	async applyCmd() {
-		const results = [];
-		while(this._lastApplied < this._commitIndex) {
-			const {cmd} = this._logEntries[this._lastApplied + 1];
-			const result = await this._cmdHandler.execute(cmd);
-
-			results.push({result, cmd});
-			this._lastApplied++;
+	nextCmd() {
+		const cmd = this._logEntries[this._lastApplied + 1];
+		if(!cmd) {
+			return null
 		}
 
-		return results;
+		this._lastApplied++;
+		return cmd;
 	}
 }
 

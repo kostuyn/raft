@@ -5,8 +5,8 @@ const _ = require('lodash');
 const Base = require('./base');
 
 class Leader extends Base {
-    constructor(state, timer, log) {
-        super(state, timer, log);
+    constructor(state, timer, nodes, cmdHandler, log) {
+        super(state, timer, nodes, cmdHandler, log);
 
         this._cmdResolvers = {};
     }
@@ -33,7 +33,7 @@ class Leader extends Base {
         //     respond after entry applied to state machine (5.3)
         this._state.addCmd({cmd, term: this._state.currentTerm});
 
-        const key = this._getKey(cmd);
+        const key = this._getKey(cmd.clientId, cmd.id);
         return new Promise((resolve, reject) => {
             this._cmdResolvers[key] = {resolve, reject};
         }).then((result) => {
@@ -92,10 +92,10 @@ class Leader extends Base {
 
             // If commitIndex > lastApplied: increment lastApplied, apply
             // log[lastApplied] to state machine (5.3)
-            const results = await this._state.applyCmd();
+            const results = await this._applyCmd();
 
-            _.forEach(results, ({cmd, result}) => {
-                const key = this._getKey(cmd);
+            _.forEach(results, ({clientId, id, result}) => {
+                const key = this._getKey(clientId, id);
                 const resolver = this._cmdResolvers[key];
                 resolver.resolve(result);
             });
@@ -114,7 +114,7 @@ class Leader extends Base {
         }
     }
 
-    _getKey({clientId, cmdId}) {
+    _getKey(clientId, cmdId) {
         return [clientId, cmdId].join(':');
     }
 }

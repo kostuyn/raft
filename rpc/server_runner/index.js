@@ -3,8 +3,6 @@
 class ServerRunner {
     constructor(manager, server, log) {
         this._manager = manager;
-        this._appendEntriesHandler = manager.appendEntries.bind(manager);
-        this._requestVoteHandler = manager.requestVote.bind(manager);
 
         this._server = server;
         this._log = log;
