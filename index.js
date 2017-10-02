@@ -1,37 +1,31 @@
 'use strict';
 
-const Manager = require('./manager');
-const Follower = require('./follower');
-const Candidate = require('./candidate');
-const Leader = require('./leader');
+const managerFactory = require('./manager');
 
-const ClientFactory = require('./client_factory');
+const Client = require('./transport/client');
 const ServerRunner = require('./server_runner');
-const Server = require('./server');
+const Server = require('./transport/server');
 
-const CommandHandler = require('./command_handles');
+const CommandHandler = require('./command_handler');
 const Node = require('./node');
 
 const State = require('./state');
-const Timer = require('./timer');
+const timerFactory = require('./lib/timer');
 
 // logger stub
 const log = console;
 
-const clientFactory = new ClientFactory(log);
+const client1 = new Client(log);
+const client2 = new Client(log);
 
-const node1 = new Node(clientFactory, log);
-const node2 = new Node(clientFactory, log);
+const node1 = new Node(client1, log);
+const node2 = new Node(client2, log);
 
 const cmdHandler = new CommandHandler(log);
 
 const state = new State([node1, node2], cmdHandler);
 
-const follower = new Follower(state, new Timer(), log);
-const candidate = new Candidate(state, new Timer(), log);
-const leader = new Leader(state, new Timer(), log);
-
-const manager = new Manager(follower, candidate, leader, log);
+const manager = managerFactory(state, timerFactory, log);
 
 const server = new Server(log);
 const serverRunner = new ServerRunner(manager, server, log);
