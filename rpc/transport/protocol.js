@@ -1,111 +1,96 @@
 'use strict';
 
-const shortid = require('shortid');
 const EventEmitter = require('events').EventEmitter;
 
+const ID_OFFSET = 11;
+const DATA_OFFSET = ID_OFFSET + 16; // 11 = lengthContent + offset + type fields; 16 = uuid length
+
 class Protocol extends EventEmitter {
-    constructor(socket) {
-        super();
+	constructor(uuid) {
+		super();
 
-        this._contentLength = 0;
-        this._buffer = new Buffer(0);
-        this._socket = socket;
+		this._contentLength = 0;
+		this._buffer = new Buffer(0);
+		this._uuid = uuid;
+	}
 
-        socket.on('data', (data) => {
-            this._onData(data);
-        });
-        socket.on('error', (err) => {
-            this.emit('error', err);
-        });
-    }
+	getData(type, name, msg) {
+		const messageData = JSON.stringify(msg);
+		const dataBuf = Buffer.from(messageData);
+		const nameBuf = Buffer.from(name);
+		const uuidBuf = Buffer.from(this._uuid(null, Array(16), 0));
 
-    // TODO: return id for catch its response
-    sendAsync(type, name, msg) {
-        return new Promise((resolve) => {
-            const messageData = JSON.stringify(msg);
-            const dataBuf = new Buffer(messageData);
-            const nameBuf = new Buffer(name);
+		const offset = nameBuf.length + DATA_OFFSET;
+		const length = offset + dataBuf.length;
 
-            const offset = nameBuf.length + 11;
-            const length = offset + dataBuf.length;
+		let buffer = new Buffer(11);
 
-            let buffer = new Buffer(11);
+		buffer.writeUIntBE(dataBuf.length, 0, 8);
+		buffer.writeUIntBE(offset, 8, 2);
+		buffer.writeUIntBE(type, 10, 1);
 
-            buffer.writeUIntBE(length, 0, 8);
-            buffer.writeUIntBE(offset, 8, 2);
-            buffer.writeUIntBE(type, 10, 1);
-            buffer = Buffer.concat([buffer, nameBuf, dataBuf], length);
+		return {
+			id: uuidBuf.toString(),
+			buffer: Buffer.concat([buffer, uuidBuf, nameBuf, dataBuf], length)
+		};
+	};
 
-            this._socket.write(buffer, () => {
-                resolve();
-            });
-        });
-    };
+	onData(data) {
+		try{
+			this._handleData(data);
+		} catch(err) {
+			this.emit('error', err);
+		}
+	}
 
-    _onData(data) {
-        try {
-            this._handleData(data);
-        } catch (err) {
-            this.emit('error', err);
-        }
-    }
+	_handleData(data) {
+		this._buffer = Buffer.concat([this._buffer, data]);
+		let type;
+		let id;
+		let name;
 
-    _handleData(data) {
-        this._buffer = Buffer.concat([this._buffer, data]);
-        let type;
-        let name;
+		if(!this._contentLength) {
+			if(this._buffer.length >= 10) {
+				const length = this._buffer.readUIntBE(0, 8);
+				const offset = this._buffer.readUIntBE(8, 2);
 
-        if (!this._contentLength) {
-            if (this._buffer.length >= 10) {
-                const length = this._buffer.readUIntBE(0, 8);
-                const offset = this._buffer.readUIntBE(8, 2);
+				if(this._buffer.length >= offset) {
+					type = this._buffer.readUIntBE(10, 1);
+					id = this._buffer.toString('utf8', ID_OFFSET, DATA_OFFSET);
+					name = this._buffer.toString('utf8', DATA_OFFSET, offset);
 
-                if (this._buffer.length >= offset) {
-                    type = this._buffer.readUIntBE(10, 1);
-                    name = this._buffer.toString('utf8', 11, offset);
+					this._contentLength = length;
+					this._buffer = this._buffer.slice(offset);
+				}
+			}
+		}
 
-                    this._contentLength = length - offset;
-                    this._buffer = this._buffer.slice(offset);
-                }
-            }
-        }
+		if(this._contentLength) {
+			if(this._buffer.length === this._contentLength) {
+				this._handleMessage(this._buffer, id, type, name);
+			}
+			else if(this._buffer.length > this._contentLength) {
+				const data = this._buffer.slice(0, this._contentLength);
+				const rest = this._buffer.slice(this._contentLength);
+				this._handleMessage(data, id, type, name);
+				this._handleData(rest);
+			}
+		}
+	}
 
-        if (this._contentLength) {
-            if (this._buffer.length === this._contentLength) {
-                this._handleMessage(this._buffer, type, name);
-            } else if (this._buffer.length > this._contentLength) {
-                const message = this._buffer.slice(0, this._contentLength);
-                const rest = this._buffer.slice(this._contentLength);
-                this._handleMessage(message, type, name);
-                this._handleData(rest);
-            }
-        }
-    }
+	_handleMessage(data, id, type, name) {
+		this._contentLength = 0;
+		this._buffer = new Buffer(0);
+		let message;
+		try{
+			message = JSON.parse(data);
+		} catch(e) {
+			this.emit('error', new Error('Could not parse JSON: ' + e.message + '\nRequest data: ' + data));
+		}
+		message = message || {};
 
-    _handleMessage(data, type, name) {
-        this._contentLength = 0;
-        this._buffer = new Buffer(0);
-        let message;
-        try {
-            message = JSON.parse(data);
-        } catch (e) {
-            this.emit('error', new Error('Could not parse JSON: ' + e.message + '\nRequest data: ' + data));
-        }
-        message = message || {};
-
-        // TODO: split several responses by id ??
-        switch (type) {
-            case Protocol.REQUEST:
-                // TODO: add id for send response with it
-                this.emit(Protocol.REQUEST, {name, message});
-                break;
-            case Protocol.RESPONSE:
-                // TODO: add id for find response receiver
-                this.emit(Protocol.RESPONSE, {name, message});
-                break;
-        }
-    }
-
+		this.emit(id, {type, name, message});
+	}
 }
 
 Protocol.REQUEST = 1;
