@@ -33,7 +33,7 @@ describe('Protocol Test', () => {
 		assert.deepEqual(JSON.parse(data.buffer.slice(offset, offset + length)), message);
 	});
 	
-	it('onData', (done) => {
+	it('onData request', (done) => {
 		const type = Protocol.REQUEST;
 		const name = 'my name';
 		const message = {msg: 'my message1', msg2: 'my message2'};
@@ -41,8 +41,24 @@ describe('Protocol Test', () => {
 		const protocol = new Protocol(uuid);
 		const data = protocol.getData(type, name, message);
 		
+		protocol.once(Protocol.REQUEST, (msg) => {
+			assert.deepEqual(msg, {id: data.id, name, message});
+			done();
+		});
+
+		protocol.onData(data.buffer);
+	});
+
+	it('onData response', (done) => {
+		const type = Protocol.RESPONSE;
+		const name = 'my name';
+		const message = {msg: 'my message1', msg2: 'my message2'};
+
+		const protocol = new Protocol(uuid);
+		const data = protocol.getData(type, name, message);
+
 		protocol.once(data.id, (msg) => {
-			assert.deepEqual(msg, {type, name, message});
+			assert.deepEqual(msg, {id: data.id, name, message});
 			done();
 		});
 

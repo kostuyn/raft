@@ -14,11 +14,14 @@ class Protocol extends EventEmitter {
 		this._uuid = uuid;
 	}
 
-	getData(type, name, msg) {
+	// TODO: id size??
+	getData(type, name, msg, id) {
+		id = id || this._uuid(null, Array(16), 0);
+		
 		const messageData = JSON.stringify(msg);
 		const dataBuf = Buffer.from(messageData);
 		const nameBuf = Buffer.from(name);
-		const uuidBuf = Buffer.from(this._uuid(null, Array(16), 0));
+		const uuidBuf = Buffer.from(id);
 
 		const offset = nameBuf.length + DATA_OFFSET;
 		const length = offset + dataBuf.length;
@@ -87,9 +90,16 @@ class Protocol extends EventEmitter {
 		} catch(e) {
 			this.emit('error', new Error('Could not parse JSON: ' + e.message + '\nRequest data: ' + data));
 		}
+		
 		message = message || {};
-
-		this.emit(id, {type, name, message});
+		const msg = {id, name, message};
+		
+		switch (type){
+			case Protocol.REQUEST:
+				return this.emit(Protocol.REQUEST, msg);
+			case Protocol.RESPONSE:
+				return this.emit(id, msg);
+		}		
 	}
 }
 

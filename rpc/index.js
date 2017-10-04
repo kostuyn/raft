@@ -1,6 +1,6 @@
 'use strict';
 
-const uuid = require('uuid').v4;
+const uuid = require('uuid/v4');
 const net = require('net');
 
 const Client = require('./transport/client');
