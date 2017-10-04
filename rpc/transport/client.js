@@ -1,10 +1,10 @@
 'use strict';
 
 class Client {
-    constructor(config, net, protocol, log) {
+    constructor(config, net, protocolFactory, log) {
         this._config = config;
 	    this._net = net;
-	    this._protocol = protocol;
+	    this._protocolFactory = protocolFactory;
         this._log = log;
     }
 

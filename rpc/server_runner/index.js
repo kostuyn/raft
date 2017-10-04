@@ -10,17 +10,29 @@ class ServerRunner {
 
 	async run() {
 		this._server.on('appendEntries', async(msg) => {
-			const response = await this._manager.appendEntries(msg.message);
-			await this._server.responseAsync('appendEntries', {id: msg.id, response});
+			const reply = await this._manager.appendEntries(msg.message);
+			const response = this._createResponse(reply, msg);
+
+			await this._server.responseAsync('appendEntries', response);
 		});
 
 		this._server.on('requestVote', async(args) => {
-			const result = await this._manager.requestVote(args);
-			await this._server.responseAsync('requestVote', result);
+			const reply = await this._manager.requestVote(args);
+			const response = this._createResponse(reply, msg);
+
+			await this._server.responseAsync('requestVote', response);
 		});
 
 		this._manager.run();
 		await this._server.listenAsync();
+	}
+
+	_createResponse(reply, msg) {
+		return {
+			reply,
+			clientId: msg.clientId,
+			requestId: msg.requestId
+		};
 	}
 }
 

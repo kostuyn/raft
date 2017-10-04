@@ -3,7 +3,7 @@
 const sinon = require('sinon');
 const assert = require('chai').assert;
 
-const Protocol = require('../../../rpc/transport/protocol');
+const Protocol = require('../../../rpc/protocol');
 
 describe('Protocol Test', () => {
 	const idBuf = [217, 119, 223, 141, 202, 93, 66, 3, 178, 198, 149, 37, 232, 4, 107, 241];
