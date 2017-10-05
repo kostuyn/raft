@@ -6,15 +6,12 @@ const bufferFactory = require('./buffer_factory');
 const DataHandler = require('./data_handler');
 
 class ProtocolFactory {
-	constructor(uuid, log) {
-		this._uuid = uuid;
+	constructor(log) {
 		this._log = log;
 	}
 
-	createRequest(name, msg) {
-		const id = this._uuid(null, Array(16), 0);
-
-		return bufferFactory(REQUEST, name, msg, id);
+	createRequest(name, msg, requestId) {
+		return bufferFactory(REQUEST, name, msg, requestId);
 	}
 
 	createResponse(name, msg, requestId) {
@@ -22,10 +19,10 @@ class ProtocolFactory {
 	}
 
 	createHandler() {
-		return new DataHandler(this._uuid, this._log);
+		return new DataHandler(this._log);
 	}
 }
 
-module.exports = function (uuid, log) {
-	return new ProtocolFactory(uuid, log);
+module.exports = function (log) {
+	return new ProtocolFactory(log);
 };

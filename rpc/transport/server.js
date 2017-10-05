@@ -20,8 +20,8 @@ class Server extends EventEmitter {
 				const handler = this._protocolFactory.createHandler();
 				const clientId = uuid();
 
-				handler.on('request', (msg) => {
-					this.emit(msg.name, {msg, clientId});
+				handler.on('request', ({id, name, data}) => {
+					this.emit(name, {requestId: id, data, clientId});
 				});
 				
 				socket.on('data', (data) => {

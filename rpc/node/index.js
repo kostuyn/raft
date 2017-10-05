@@ -8,21 +8,21 @@ class Node {
 
     async connect() {
         // TODO: reconnect logic
-        //this._client.on('error', );
+        //this._client.on('error', );Async
 
-        await this._client.connect();
+        await this._client.connectAsync();
     }
 
     async close() {
-        await this._client.close();
+        await this._client.closeAsync();
     }
 
     async appendEntries(args) {
-        return await this._client.send('appendEntries', args);
+        return await this._client.sendAsync('appendEntries', args);
     }
 
     async requestVote(args) {
-        return await this._client.send('requestVote', args);
+        return await this._client.sendAsync('requestVote', args);
     }
 }
 

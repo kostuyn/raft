@@ -1,21 +1,21 @@
 'use strict';
 
-const {DATA_OFFSET} = require('./constants').offsets;
+const {ID_OFFSET, DATA_OFFSET} = require('./constants').offsets;
 
 module.exports = function (type, name, msg, id) {
 	const messageData = JSON.stringify(msg);
 	const dataBuf = Buffer.from(messageData);
 	const nameBuf = Buffer.from(name);
-	const uuidBuf = Buffer.from(id);
 
 	const offset = nameBuf.length + DATA_OFFSET;
 	const length = offset + dataBuf.length;
 
-	let buffer = new Buffer(11);
+	let buffer = new Buffer(DATA_OFFSET);
 
-	buffer.writeUIntBE(dataBuf.length, 0, 8);
-	buffer.writeUIntBE(offset, 8, 2);
-	buffer.writeUIntBE(type, 10, 1);
+	buffer.writeUInt32BE(dataBuf.length, 0);
+	buffer.writeInt16BE(offset, 4);
+	buffer.writeUInt8(type, 6);
+	buffer.writeUInt32BE(id, ID_OFFSET);
 
-	return Buffer.concat([buffer, uuidBuf, nameBuf, dataBuf], length);
+	return Buffer.concat([buffer, nameBuf, dataBuf], length);
 };

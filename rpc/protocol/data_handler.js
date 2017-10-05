@@ -6,9 +6,11 @@ const {REQUEST, RESPONSE} = require('./constants').types;
 const {ID_OFFSET, DATA_OFFSET} = require('./constants').offsets;
 
 class DataHandler extends EventEmitter {
-	constructor() {
+	constructor(log) {
 		super();
 
+		this._log = log;
+		
 		this._contentLength = 0;
 		this._buffer = Buffer.alloc(0);
 	}
@@ -29,12 +31,12 @@ class DataHandler extends EventEmitter {
 
 		if (!this._contentLength) {
 			if (this._buffer.length >= 10) {
-				const length = this._buffer.readUIntBE(0, 8);
-				const offset = this._buffer.readUIntBE(8, 2);
+				const length = this._buffer.readUInt32BE(0);
+				const offset = this._buffer.readInt16BE(4);
 
 				if (this._buffer.length >= offset) {
-					type = this._buffer.readUIntBE(10, 1);
-					id = this._buffer.toString('utf8', ID_OFFSET, DATA_OFFSET);
+					type = this._buffer.readUInt8(6);
+					id = this._buffer.readUInt32BE(ID_OFFSET);
 					name = this._buffer.toString('utf8', DATA_OFFSET, offset);
 
 					this._contentLength = length;
