@@ -1,7 +1,7 @@
 'use strict';
 
-const uuid = ('uuid/v4');
-const EventEmitter = require('events').EventEmitter;
+const uuid = require('uuid/v4');
+const {EventEmitter} = require('events');
 
 class Server extends EventEmitter {
 	constructor(config, net, protocolFactory, log) {
@@ -16,23 +16,25 @@ class Server extends EventEmitter {
 
 	listenAsync() {
 		return new Promise((resolve, reject) => {
-			const server = this._net.createServer((socket) => {
-				const handler = this._protocolFactory.createHandler();
+			const server = this._net.createServer();
+
+			server.on('connection', (socket) => {				
+				const handler = this._protocolFactory.createHandler();				
 				const clientId = uuid();
 
 				handler.on('request', ({id, name, data}) => {
 					this.emit(name, {requestId: id, data, clientId});
 				});
-				
+			
 				socket.on('data', (data) => {
 					handler.onData(data);
 				});
-				
-				socket.on('error', (e) =>{
+
+				socket.on('error', (e) => {
 					this._log.error(e);
 					delete this._sockets[clientId];
 				});
-				
+
 				this._sockets[clientId] = socket;
 			});
 
