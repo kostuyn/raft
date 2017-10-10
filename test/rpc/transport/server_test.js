@@ -48,7 +48,7 @@ describe('Server Test', () => {
 	});
 
 	it('listenAsync resolve promise', async () => {
-		const server = new Server({}, net, protocolFactoryMock, console);
+		const server = new Server({}, protocolFactoryMock, net, console);
 
 		netServer.listen.callsArgAsync(1);
 
@@ -60,7 +60,7 @@ describe('Server Test', () => {
 		const name = 'my event';
 		const data = {hello: 'world'};
 
-		const server = new Server({}, net, protocolFactoryMock, console);
+		const server = new Server({}, protocolFactoryMock, net, console);
 
 		netServer.on.withArgs('connection').callsArgWithAsync(1, socket);
 		handler.on.withArgs('request').callsArgWithAsync(1, {id, name, data});
@@ -83,7 +83,7 @@ describe('Server Test', () => {
 		const data = {hello: 'world'};
 	
 		const protocolFactory = new ProtocolFactory(console);
-		const server = new Server({}, net, protocolFactory, console);
+		const server = new Server({}, protocolFactory, net, console);
 		const socket1 = {
 			on: sinon.stub()
 		};

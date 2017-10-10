@@ -16,9 +16,9 @@ class DataHandler extends EventEmitter {
 	}
 
 	onData(data) {
-		try{
+		try {
 			this._handleData(data);
-		} catch(err) {
+		} catch (err) {
 			this.emit('error', err);
 		}
 	}
@@ -29,12 +29,12 @@ class DataHandler extends EventEmitter {
 		let id;
 		let name;
 
-		if(!this._contentLength) {
-			if(this._buffer.length >= 10) {
+		if (!this._contentLength) {
+			if (this._buffer.length >= 10) {
 				const length = this._buffer.readUInt32BE(0);
 				const offset = this._buffer.readInt16BE(4);
 
-				if(this._buffer.length >= offset) {
+				if (this._buffer.length >= offset) {
 					type = this._buffer.readUInt8(6);
 					id = this._buffer.readUInt32BE(ID_OFFSET);
 					name = this._buffer.toString('utf8', DATA_OFFSET, offset);
@@ -45,11 +45,11 @@ class DataHandler extends EventEmitter {
 			}
 		}
 
-		if(this._contentLength) {
-			if(this._buffer.length === this._contentLength) {
+		if (this._contentLength) {
+			if (this._buffer.length === this._contentLength) {
 				this._handleMessage(this._buffer, id, type, name);
 			}
-			else if(this._buffer.length > this._contentLength) {
+			else if (this._buffer.length > this._contentLength) {
 				const data = this._buffer.slice(0, this._contentLength);
 				const rest = this._buffer.slice(this._contentLength);
 				this._handleMessage(data, id, type, name);
@@ -62,16 +62,16 @@ class DataHandler extends EventEmitter {
 		this._contentLength = 0;
 		this._buffer = Buffer.alloc(0);
 		let message;
-		try{
+		try {
 			message = JSON.parse(data);
-		} catch(e) {
+		} catch (e) {
 			this.emit('error', new Error('Could not parse JSON: ' + e.message + '\nRequest data: ' + data));
 		}
 
 		message = message || {};
 		const msg = {id, name, message};
 
-		switch(type) {
+		switch (type) {
 			case REQUEST:
 				return this.emit('request', msg);
 			case RESPONSE:

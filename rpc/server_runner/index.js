@@ -3,51 +3,24 @@
 class ServerRunner {
 	constructor(manager, server, log) {
 		this._manager = manager;
-
 		this._server = server;
 		this._log = log;
 	}
 
 	async run() {
-		// this._server.on('appendEntries', async(msg) => {
-		// 	const reply = await this._manager.appendEntries(msg.message);
-		// 	const response = this._createResponse(reply, msg);
-		//
-		// 	await this._server.responseAsync('appendEntries', response);
-		// });
-		//
-		// this._server.on('requestVote', async(args) => {
-		// 	const reply = await this._manager.requestVote(args);
-		// 	const response = this._createResponse(reply, msg);
-		//
-		// 	await this._server.responseAsync('requestVote', response);
-		// });
-
 		this._manager.run();
-		
+
 		const listener = await this._server.listenAsync();
-		
-		listener.on('appendEntries', async({requestId, msg, res}) => {
+
+		listener.on('appendEntries', async ({requestId, msg, res}) => {
 			const reply = await this._manager.appendEntries(msg);
-			const response = this._createResponse(requestId, reply);
-
-			await res.sendAsync(response);
+			await res.sendAsync({requestId, reply});
 		});
 
-		listener.on('requestVote', async(args) => {
-			const reply = await this._manager.requestVote(args);
-			const response = this._createResponse(reply, msg);
-
-			await this._server.responseAsync('requestVote', response);
+		listener.on('requestVote', async ({requestId, msg, res}) => {
+			const reply = await this._manager.requestVote(msg);
+			await res.sendAsync({requestId, reply});
 		});
-	}
-
-	_createResponse(reply, msg) {
-		return {
-			reply,
-			clientId: msg.clientId,
-			requestId: msg.requestId
-		};
 	}
 }
 

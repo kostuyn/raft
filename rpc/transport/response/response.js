@@ -8,9 +8,9 @@ class Response {
 		this._log = log;
 	}
 
-	sendAsync({requestId, data}){
+	sendAsync({requestId, reply}) {
 		return new Promise((resolve, reject) => {
-			const buffer = this._protocolFactory.createResponse(this._name, data, requestId);
+			const buffer = this._protocolFactory.createResponse(this._name, reply, requestId);
 
 			this._socket.write(buffer, () => {
 				this._socket.removeListener(resolve);
@@ -18,6 +18,7 @@ class Response {
 			});
 
 			this._socket.once('error', resolve);
+			this._socket.once('end', resolve);
 		});
 	}
 }
