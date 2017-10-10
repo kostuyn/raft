@@ -1,6 +1,6 @@
 'use strict';
 
-const assert = require('chai').assert;
+const {assert} = require('chai');
 
 const DataHandler = require('../../../rpc/protocol/data_handler');
 const bufferFactory = require('../../../rpc/protocol/buffer_factory');
@@ -9,14 +9,15 @@ const {REQUEST, RESPONSE} = require('../../../rpc/protocol/constants').types;
 
 describe('DataHandler Test', () => {	
 	it('onData request', (done) => {
+		const requestId = 123;
 		const name = 'my name';
-		const message = {msg: 'my message1', msg2: 'my message2'};
+		const msg = {msg: 'my message1', msg2: 'my message2'};
 		
 		const handler = new DataHandler();
-		const data = bufferFactory(REQUEST, name, message, 123);
+		const data = bufferFactory(REQUEST, name, msg, requestId);
 
-		handler.once('request', (msg) => {
-			assert.deepEqual(msg, {id: 123, name, message});
+		handler.once('request', (message) => {
+			assert.deepEqual(message, {requestId, name, msg});
 			done();
 		});
 
@@ -24,15 +25,15 @@ describe('DataHandler Test', () => {
 	});
 
 	it('onData response', (done) => {
-		const name = 'my name';
-		const message = {msg: 'my message1', msg2: 'my message2'};
-
 		const requestId = 456;
-		const protocol = new DataHandler();		
-		const data = bufferFactory(RESPONSE, name, message, requestId);
+		const name = 'my name';
+		const msg = {msg: 'my message1', msg2: 'my message2'};
 
-		protocol.once(requestId, (msg) => {
-			assert.deepEqual(msg, {id: requestId, name, message});
+		const protocol = new DataHandler();		
+		const data = bufferFactory(RESPONSE, name, msg, requestId);
+
+		protocol.once(requestId, (message) => {
+			assert.deepEqual(message, {requestId, name, msg});
 			done();
 		});
 

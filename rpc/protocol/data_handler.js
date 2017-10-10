@@ -58,24 +58,24 @@ class DataHandler extends EventEmitter {
 		}
 	}
 
-	_handleMessage(data, id, type, name) {
+	_handleMessage(data, requestId, type, name) {
 		this._contentLength = 0;
 		this._buffer = Buffer.alloc(0);
-		let message;
+		let msg;
 		try {
-			message = JSON.parse(data);
+			msg = JSON.parse(data);
 		} catch (e) {
 			this.emit('error', new Error('Could not parse JSON: ' + e.message + '\nRequest data: ' + data));
 		}
 
-		message = message || {};
-		const msg = {id, name, message};
+		msg = msg || {};
+		const message = {requestId, name, msg};
 
 		switch (type) {
 			case REQUEST:
-				return this.emit('request', msg);
+				return this.emit('request', message);
 			case RESPONSE:
-				return this.emit(id, msg);
+				return this.emit(requestId, message);
 		}
 	}
 }

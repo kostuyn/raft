@@ -17,8 +17,6 @@ class ServerListener extends EventEmitter {
 
 	add(socket) {
 		const clientId = uuid();
-
-		const response = this._responseFactory.create(name, socket);
 		const handler = this._handlerFactory.create(socket);
 
 		this._sockets[clientId] = socket;
@@ -32,11 +30,12 @@ class ServerListener extends EventEmitter {
 			delete this._sockets[clientId];
 		});
 
-		handler.on('request', ({id, name, data}) => {
+		handler.on('request', ({requestId, name, msg}) => {
+			const res = this._responseFactory.create(name, socket);
 			this.emit(name, {
-				requestId: id,
-				msg: data,
-				res: response
+				requestId,
+				msg,
+				res
 			});
 		});
 	}

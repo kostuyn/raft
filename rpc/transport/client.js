@@ -33,8 +33,8 @@ class Client {
 		return new Promise((resolve, reject) => {
 			const requestId = this._getId();
 
-			this._handler.once(requestId, ({data}) => {
-				resolve(data);
+			this._handler.once(requestId, ({msg}) => {
+				resolve(msg);
 			});
 
 			const data = this._protocolFactory.createRequest(name, msg, requestId);

@@ -14,12 +14,12 @@ class ServerRunner {
 
 		listener.on('appendEntries', async ({requestId, msg, res}) => {
 			const reply = await this._manager.appendEntries(msg);
-			await res.sendAsync({requestId, reply});
+			await res.sendAsync(requestId, reply);
 		});
 
 		listener.on('requestVote', async ({requestId, msg, res}) => {
 			const reply = await this._manager.requestVote(msg);
-			await res.sendAsync({requestId, reply});
+			await res.sendAsync(requestId, reply);
 		});
 	}
 }

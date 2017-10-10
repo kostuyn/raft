@@ -1,5 +1,7 @@
 'use strict';
 
+const {EventEmitter} = require('events');
+
 const sinon = require('sinon');
 const {assert} = require('chai');
 
@@ -7,108 +9,70 @@ const Server = require('../../../rpc/transport/server');
 const ProtocolFactory = require('../../../rpc/protocol');
 
 describe('Server Test', () => {
-	const socket = {
-		on: sinon.stub()
-	};
-	
-	const netServer = {
-		listen: sinon.stub(),
-		on: sinon.stub()
-	};
-	
-	const handler = {
-		onData: sinon.stub(),
-		on: sinon.stub()
-	};
+	let netServer;
 
 	const net = {
 		createServer: sinon.stub()
 	};
 
-	const protocolFactoryMock = {
-		createResponse: sinon.stub(),
-		createHandler: () => handler
+	const listenerFactory = {
+		create: sinon.stub()
 	};
 
-	before(() =>{
+	before(() => {
+		netServer =
+			Object.assign(new EventEmitter(), {
+				listen: sinon.stub(),
+			});
+
 		net.createServer.returns(netServer);
 	});
-	
-	after(() => {		
-		handler.on.reset();
-		handler.onData.reset();
 
-		socket.on.reset();
+	after(() => {
 		net.createServer.reset();
-
 		netServer.listen.reset();
-		netServer.on.reset();
-		
-		protocolFactoryMock.createResponse.reset();
 	});
 
 	it('listenAsync resolve promise', async () => {
-		const server = new Server({}, protocolFactoryMock, net, console);
+		const listener = {};
+		const config = {};
+		const server = new Server(config, listenerFactory, net, console);
+
+		listenerFactory.create.returns(listener);
+		netServer.listen.callsArgAsync(1);
+
+		const result = await server.listenAsync();
+
+		assert.equal(result, listener);
+		sinon.assert.calledWith(netServer.listen, sinon.match.same(config));
+	});
+
+	it('listenAsync connect', async () => {
+		const socket1 = {};
+		const socket2 = {};
+		const listener = {
+			add: sinon.stub()
+		};
+		const server = new Server({}, listenerFactory, net, console);
+
+		listenerFactory.create.returns(listener);
+
+		const netServer =
+			Object.assign(new EventEmitter(), {
+				listen: sinon.stub(),
+			});
 
 		netServer.listen.callsArgAsync(1);
 
-		await server.listenAsync();
-	});
-
-	it('listenAsync emit event', (done) => {
-		const id = 123;
-		const name = 'my event';
-		const data = {hello: 'world'};
-
-		const server = new Server({}, protocolFactoryMock, net, console);
-
-		netServer.on.withArgs('connection').callsArgWithAsync(1, socket);
-		handler.on.withArgs('request').callsArgWithAsync(1, {id, name, data});
-
-		server.on(name, (event) => {
-			assert.isString(event.clientId);
-			assert.equal(event.requestId, id);
-			assert.equal(event.data, data);
-			
-			done();
+		net.createServer.returns(netServer);
+		const result = await server.listenAsync().then((result) => {
+			netServer.emit('connection', socket1);
+			netServer.emit('connection', socket2);
+			return result;
 		});
 
-		server.listenAsync();
-	});
-
-	it('listenAsync emit events', (done) => {
-		let clientId = -1;
-		const id = 123;
-		const name = 'my event';
-		const data = {hello: 'world'};
-	
-		const protocolFactory = new ProtocolFactory(console);
-		const server = new Server({}, protocolFactory, net, console);
-		const socket1 = {
-			on: sinon.stub()
-		};
-		const socket2 = {
-			on: sinon.stub()
-		};
-	
-		netServer.on.withArgs('connection').onCall(0).callsArgWithAsync(1, socket1);
-		netServer.on.withArgs('connection').onCall(1).callsArgWithAsync(1, socket2);
-	
-		socket1.on.withArgs('data').callsArgWithAsync(1, protocolFactory.createRequest(name, data, id));
-		
-		server.on(name, (event) => {
-			assert.isString(event.clientId);
-			assert.equal(event.requestId, id);
-			assert.equal(event.data, data);
-	
-			clientId = event.clientId;
-			console.log(clientId);
-	
-			if(clientId >= 2) {
-				done();
-			}
-		});
-	
-		server.listenAsync();
+		sinon.assert.callCount(result.add, 2);
+		sinon.assert.calledWithExactly(result.add, sinon.match.same(socket1));
+		sinon.assert.calledWithExactly(result.add, sinon.match.same(socket2));
 	});
 });
