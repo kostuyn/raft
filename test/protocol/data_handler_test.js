@@ -2,10 +2,10 @@
 
 const {assert} = require('chai');
 
-const DataHandler = require('../../../rpc/protocol/data_handler');
-const bufferFactory = require('../../../rpc/protocol/buffer_factory');
+const DataHandler = require('../../protocol/data_handler');
+const bufferFactory = require('../../protocol/buffer_factory');
 
-const {REQUEST, RESPONSE} = require('../../../rpc/protocol/constants').types;
+const {REQUEST, RESPONSE} = require('../../protocol/constants').types;
 
 describe('DataHandler Test', () => {	
 	it('onData request', (done) => {

@@ -2,9 +2,9 @@
 
 const assert = require('chai').assert;
 
-const bufferFactory = require('../../../rpc/protocol/buffer_factory');
-const {REQUEST, RESPONSE} = require('../../../rpc/protocol/constants').types;
-const {ID_OFFSET, DATA_OFFSET} = require('../../../rpc/protocol/constants').offsets;
+const bufferFactory = require('../../protocol/buffer_factory');
+const {REQUEST, RESPONSE} = require('../../protocol/constants').types;
+const {ID_OFFSET, DATA_OFFSET} = require('../../protocol/constants').offsets;
 
 describe('Protocol Test', () => {
 	it('bufferFactory request', async() => {

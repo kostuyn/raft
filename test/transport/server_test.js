@@ -5,8 +5,8 @@ const {EventEmitter} = require('events');
 const sinon = require('sinon');
 const {assert} = require('chai');
 
-const Server = require('../../../rpc/transport/server');
-const ProtocolFactory = require('../../../rpc/protocol');
+const Server = require('../../transport/server');
+const ProtocolFactory = require('../../protocol');
 
 describe('Server Test', () => {
 	let netServer;

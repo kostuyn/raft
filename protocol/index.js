@@ -23,4 +23,6 @@ class ProtocolFactory {
 	}
 }
 
-module.exports = ProtocolFactory;
+exports.createFactory = function(log){
+	return new ProtocolFactory(log);
+};

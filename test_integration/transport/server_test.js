@@ -1,12 +1,12 @@
 'use strict';
 
-const {EventEmitter} = require('events');
+const net = require('net');
 
 const sinon = require('sinon');
 const {assert} = require('chai');
 
-const transportFactory = require('../../../rpc/transport');
-const ProtocolFactory = require('../../../rpc/protocol');
+const transport = require('../../transport');
+const protocol = require('../../protocol');
 
 describe('Server Integration Test', () => {
 	it('success send request & response', async () => {
@@ -21,7 +21,8 @@ describe('Server Integration Test', () => {
 		const reply = {fuz: {baz: 'hello'}, baz: 1234};
 
 		const log = console;
-		const protocolFactory = new ProtocolFactory(log);
+		const protocolFactory = protocol.createFactory(log);
+		const transportFactory = transport.createFactory(protocolFactory, net, log);
 
 		const server = transportFactory.createServer(config, protocolFactory, log);
 
